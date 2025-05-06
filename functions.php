@@ -131,25 +131,39 @@ function getGenderDescription(array $persons): string {
 }
 
 
-function getPerfectPartner(string $surname, string $name, string $patronymic, array $persons) : string {
+function getPerfectPartner(string $surname, string $name, string $patronymic, array $persons): string {
     $surname    = mb_convert_case(mb_strtolower($surname), MB_CASE_TITLE, "UTF-8");
     $name       = mb_convert_case(mb_strtolower($name), MB_CASE_TITLE, "UTF-8");
     $patronymic = mb_convert_case(mb_strtolower($patronymic), MB_CASE_TITLE, "UTF-8");
 
-    $full     = getFullnameFromParts($surname, $name, $patronymic);
+    $full = getFullnameFromParts($surname, $name, $patronymic);
     $myGender = getGenderFromName($full);
 
-    do {
-        $candidate  = $persons[array_rand($persons)]['fullname'];
-        $candGender = getGenderFromName($candidate); 
-    } while ($candGender === 0 || $candGender === $myGender);
+    if ($myGender === 0) {
+        return "Не удалось подобрать пару: пол не определён.";
+    }
 
-    $me   = getShortName($full);
+    $attempts = 0;
+    $maxAttempts = 1000;
+
+    do {
+        $candidate = $persons[array_rand($persons)]['fullname'];
+        $candGender = getGenderFromName($candidate);
+        $attempts++;
+    } while ($candGender !== -$myGender && $attempts < $maxAttempts);
+
+    if ($candGender !== -$myGender) {
+        return "Не удалось подобрать пару.";
+    }
+
+    $me = getShortName($full);
     $them = getShortName($candidate);
     $rate = number_format(mt_rand(5000, 10000) / 100, 2, '.', '');
-    
-    return "{$me} + {$them} = \n♡ Идеально на {$rate}% ♡ ";
+
+    return "{$me} + {$them} = \n♡ Идеально на {$rate}% ♡";
 }
+
+
 
 
 // print_r(getPartsFromFullname('Иванов Иван Иванови'));
@@ -160,9 +174,9 @@ function getPerfectPartner(string $surname, string $name, string $patronymic, ar
 // echo getGenderFromName('Иванов Иван Иванови'), PHP_EOL;
 // echo getGenderDescription($example_persons_array);
 echo getPerfectPartner(
-    'иВаНов', 
-    'иВАН', 
-    'ИвановИЧ', 
+    'Пупкин', 
+    'Саша', 
+    'Кириллович', 
     $example_persons_array
 );
 
